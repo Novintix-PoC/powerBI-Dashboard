@@ -1,14 +1,15 @@
 import streamlit as st
 import requests
+import os
 from msal import ConfidentialClientApplication
 
 st.set_page_config(page_title="Executive Dashboard", layout="wide")
 
 # --- Azure AD Auth Setup ---
 def initialize_app():
-    client_id = st.secrets["CLIENT_ID"]
-    tenant_id = st.secrets["TENANT_ID"]
-    client_secret = st.secrets["CLIENT_SECRET"]
+    client_id = os.getenv("CLIENT_ID")
+    tenant_id = os.getenv("TENANT_ID")
+    client_secret = os.getenv("CLIENT_SECRET")
     authority_url = f"https://login.microsoftonline.com/{tenant_id}"
     return ConfidentialClientApplication(
         client_id,
@@ -26,7 +27,7 @@ def fetch_user_data(access_token):
 
 def authentication_process(app):
     scopes = ["User.Read"]
-    redirect_uri = st.secrets["REDIRECT_URI"]
+    redirect_uri = os.getenv("REDIRECT_URI")
     query_params = st.query_params
 
     if "code" in query_params and "auth_code_handled" not in st.session_state:
@@ -46,7 +47,7 @@ def authentication_process(app):
         st.markdown(f"## Microsoft Login Required  \n[Click here to sign in]({auth_url})")
         st.stop()
 
-# --- Dashboard Rendering ---
+
 def dashboard_ui(powerbi_url):
     st.markdown(
         f"""
@@ -72,7 +73,7 @@ def dashboard_ui(powerbi_url):
         """,
         unsafe_allow_html=True
     )
-# --- Top Navigation Buttons ---
+
 def btn_navigation():
     st.title("Executive Dashboards")
     col1, col2, col3 = st.columns(3)
@@ -86,7 +87,6 @@ def btn_navigation():
         if st.button("Recruitment Dashboard", use_container_width=True):
             st.session_state["active_dashboard"] = "Recruitment"
 
-# --- Main App ---
 def main():
     app = initialize_app()
     authentication_process(app)
@@ -97,10 +97,10 @@ def main():
         selected = st.session_state.get("active_dashboard", "Delivery")
 
         if selected == "Delivery":
-            dashboard_ui(st.secrets["DELIVERY_DASHBOARD_POWERBI_URL"])
+            dashboard_ui(os.getenv("DELIVERY_DASHBOARD_POWERBI_URL"))
         elif selected == "Sales":
-            dashboard_ui(st.secrets["SALES_DASHBOARD_POWERBI_URL"])
+            dashboard_ui(os.getenv("SALES_DASHBOARD_POWERBI_URL"))
         elif selected == "Recruitment":
-            dashboard_ui(st.secrets["RECRUITMENT_DASHBOARD_POWERBI_URL"])
+            dashboard_ui(os.getenv("RECRUITMENT_DASHBOARD_POWERBI_URL"))
 
 main()
